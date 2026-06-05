@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def run_migrations() -> None:
-    """Run Alembic migrations on startup. Safe to run on every boot."""
+    """Run Alembic migrations on startup. Requires psycopg2 sync driver."""
     from alembic.config import Config
     from alembic import command
     import os
@@ -30,14 +30,29 @@ def run_migrations() -> None:
         command.upgrade(alembic_cfg, "head")
         logger.info("Alembic migrations applied.")
     except Exception as e:
-        logger.warning(f"Migration warning (may be expected on first run): {e}")
+        logger.warning(f"Alembic migration failed: {e}")
+        raise
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting Protein Intelligence Platform...")
-    # Run migrations in a thread (alembic uses sync SQLAlchemy)
-    await asyncio.to_thread(run_migrations)
+
+    # Primary: Alembic migrations (handles schema evolution)
+    try:
+        await asyncio.to_thread(run_migrations)
+    except Exception as e:
+        # Fallback: create all tables directly via asyncpg if Alembic fails
+        logger.warning(f"Alembic failed ({e}), falling back to create_all...")
+        from app.db.database import engine
+        from app.db.database import Base
+        import app.models.protein  # noqa — register models
+        import app.models.mutation  # noqa
+        import app.models.structure  # noqa
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Tables created via create_all fallback.")
+
     logger.info("Startup complete.")
     yield
     logger.info("Shutting down.")
