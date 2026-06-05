@@ -1,10 +1,8 @@
 # Protein Intelligence Platform
 
-> **⚠ Setup required before sharing:** Replace `GITHUB_USERNAME` below with your GitHub username, and `YOUR_VERCEL_URL` / `YOUR_RENDER_URL` with your deployed URLs after following [DEPLOYMENT.md](DEPLOYMENT.md).
+**Live Demo:** [protein-intelligence-tau.vercel.app](https://protein-intelligence-tau.vercel.app) &nbsp;·&nbsp; **API Docs:** [protein-intelligence-otcg.onrender.com/docs](https://protein-intelligence-otcg.onrender.com/docs)
 
-**Live Demo:** [YOUR_VERCEL_URL](https://YOUR_VERCEL_URL) &nbsp;·&nbsp; **API Docs:** [YOUR_RENDER_URL/docs](https://YOUR_RENDER_URL/docs)
-
-![Build](https://img.shields.io/github/actions/workflow/status/GITHUB_USERNAME/protein-intelligence/ci.yml?branch=main&label=build)
+![Build](https://img.shields.io/github/actions/workflow/status/Auntara12/protein-intelligence/ci.yml?branch=main&label=build)
 ![Tests](https://img.shields.io/badge/tests-55%20passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-87%25-success)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
@@ -48,7 +46,7 @@ FastAPI · React · TypeScript · PostgreSQL · Redis · Docker · FAISS · ESM2
 ## Quick Start
 
 ```bash
-git clone https://github.com/GITHUB_USERNAME/protein-intelligence
+git clone https://github.com/Auntara12/protein-intelligence
 cd protein-intelligence
 
 # Full stack with Docker (recommended)
@@ -97,11 +95,10 @@ make test-cov     # with coverage HTML report
 
 **Test your deployment:**
 ```bash
-# Replace YOUR_RENDER_URL with your actual Render backend URL
-curl https://YOUR_RENDER_URL/api/v1/health
-curl https://YOUR_RENDER_URL/api/v1/protein/TP53
-curl https://YOUR_RENDER_URL/api/v1/mutation/TP53/R175H
-curl https://YOUR_RENDER_URL/api/v1/compare/TP53/TP63
+curl https://protein-intelligence-otcg.onrender.com/api/v1/health
+curl https://protein-intelligence-otcg.onrender.com/api/v1/protein/TP53
+curl https://protein-intelligence-otcg.onrender.com/api/v1/mutation/TP53/R175H
+curl https://protein-intelligence-otcg.onrender.com/api/v1/compare/TP53/TP63
 ```
 
 ---
