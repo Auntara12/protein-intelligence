@@ -40,12 +40,25 @@ async def lifespan(app: FastAPI):
 
     # Step 1: ensure all tables exist via asyncpg (idempotent, always safe)
     from app.db.database import engine, Base
+    from sqlalchemy import text
     import app.models.protein   # noqa — register models with Base
     import app.models.mutation  # noqa
     import app.models.structure # noqa
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Tables ensured via create_all.")
+
+    # Step 1b: remove any duplicate mutation rows so Alembic's unique index migration
+    # can succeed even if previous deploys inserted duplicates before the index existed.
+    try:
+        async with engine.begin() as conn:
+            result = await conn.execute(text(
+                "DELETE FROM mutations WHERE id NOT IN "
+                "(SELECT MIN(id) FROM mutations GROUP BY gene_name, mutation_str)"
+            ))
+            logger.info(f"Dedup: removed {result.rowcount} duplicate mutation rows.")
+    except Exception as e:
+        logger.warning(f"Dedup skipped (table may not exist yet): {e}")
 
     # Step 2: run Alembic to apply any column-level migrations
     try:

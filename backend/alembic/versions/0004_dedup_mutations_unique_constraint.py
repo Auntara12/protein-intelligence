@@ -24,11 +24,22 @@ def upgrade() -> None:
         )
     """)
 
-    # Add unique constraint (idempotent — IF NOT EXISTS)
+    # Add unique constraint only if it doesn't already exist
+    # (create_all may have already added it on fresh deployments)
     op.execute("""
-        ALTER TABLE mutations
-        ADD CONSTRAINT uq_mutations_gene_mutation
-        UNIQUE (gene_name, mutation_str)
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint
+                WHERE conname = 'uq_mutations_gene_mutation'
+                  AND conrelid = 'mutations'::regclass
+            ) THEN
+                ALTER TABLE mutations
+                ADD CONSTRAINT uq_mutations_gene_mutation
+                UNIQUE (gene_name, mutation_str);
+            END IF;
+        END;
+        $$;
     """)
 
 
