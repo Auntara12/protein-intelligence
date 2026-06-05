@@ -1,15 +1,11 @@
 # render.yaml — Render.com deployment configuration
 #
-# IMPORTANT: This file deploys the backend API + Redis ONLY.
-# Database is Neon PostgreSQL (neon.tech) — set DATABASE_URL manually.
-# See DEPLOYMENT.md for the full step-by-step guide.
-#
-# Usage:
-#   Option A (recommended): Deploy manually via Render dashboard.
-#   Option B: render.com → New → Blueprint → connect GitHub repo.
+# Deploys the FastAPI backend only.
+# Database : Neon PostgreSQL (neon.tech) — set DATABASE_URL manually.
+# Redis    : Upstash Redis (upstash.com)  — set REDIS_URL manually.
+# Frontend : Vercel — deployed separately via vercel.json.
 
 services:
-  # ── FastAPI Backend ─────────────────────────────────────────────────────────
   - type: web
     name: protein-intelligence-api
     runtime: python
@@ -21,19 +17,17 @@ services:
     autoDeploy: true
 
     envVars:
-      # Set DATABASE_URL manually in Render dashboard.
-      # Get it from neon.tech after creating a project.
-      # Format: postgresql+asyncpg://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
+      # Neon connection string — get from neon.tech dashboard.
+      # Format: postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
       - key: DATABASE_URL
         sync: false
 
+      # Upstash Redis URL — get from upstash.com dashboard.
+      # Format: rediss://default:password@xxx.upstash.io:6379
       - key: REDIS_URL
-        fromService:
-          type: redis
-          name: protein-intelligence-redis
-          property: connectionString
+        sync: false
 
-      # Set to your Vercel frontend URL so CORS works.
+      # Your Vercel frontend URL — set after Vercel deploy, then redeploy backend.
       # Example: https://protein-intelligence.vercel.app
       - key: ALLOWED_ORIGINS
         sync: false
@@ -44,19 +38,7 @@ services:
       - key: DEBUG
         value: "false"
 
-      # Optional: NCBI API key for higher ClinVar rate limits
-      # Get free at: https://www.ncbi.nlm.nih.gov/account/
+      # Optional: free NCBI key for higher ClinVar rate limits (10 req/s vs 3).
+      # Get at: https://www.ncbi.nlm.nih.gov/account/
       # - key: NCBI_API_KEY
       #   sync: false
-
-  # ── Redis ──────────────────────────────────────────────────────────────────
-  - type: redis
-    name: protein-intelligence-redis
-    plan: free
-    ipAllowList: []
-    maxmemoryPolicy: allkeys-lru
-
-# ── NOT included: PostgreSQL ─────────────────────────────────────────────────
-# Use Neon (neon.tech) instead of Render Postgres.
-# Reason: Render free Postgres is deleted after 90 days.
-# Neon free tier is persistent and serverless with no sleep.
