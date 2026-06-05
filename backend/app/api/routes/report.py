@@ -154,11 +154,12 @@ async def compare_proteins(
     except Exception as e:
         logger.warning(f"Alignment failed for {g1}/{g2}: {e}")
 
-    # ESM2 similarity (if both indexed)
+    # ESM2 similarity — ensure both genes are indexed first, then search
     esm2_similarity = None
     try:
-        from app.api.routes.similarity import get_similar_proteins
-        sim_result = await get_similar_proteins(g1, top_k=20, db=db)
+        from app.api.routes.similarity import get_similar_proteins, _ensure_embedding
+        await _ensure_embedding(g2, db)
+        sim_result = await get_similar_proteins(g1, top_k=50, db=db)
         for sp in sim_result.results:
             if sp.gene_name == g2:
                 esm2_similarity = sp.similarity_score
