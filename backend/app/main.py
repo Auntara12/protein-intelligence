@@ -38,20 +38,20 @@ def run_migrations() -> None:
 async def lifespan(app: FastAPI):
     logger.info("Starting Protein Intelligence Platform...")
 
-    # Primary: Alembic migrations (handles schema evolution)
+    # Step 1: ensure all tables exist via asyncpg (idempotent, always safe)
+    from app.db.database import engine, Base
+    import app.models.protein   # noqa — register models with Base
+    import app.models.mutation  # noqa
+    import app.models.structure # noqa
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Tables ensured via create_all.")
+
+    # Step 2: run Alembic to apply any column-level migrations
     try:
         await asyncio.to_thread(run_migrations)
     except Exception as e:
-        # Fallback: create all tables directly via asyncpg if Alembic fails
-        logger.warning(f"Alembic failed ({e}), falling back to create_all...")
-        from app.db.database import engine
-        from app.db.database import Base
-        import app.models.protein  # noqa — register models
-        import app.models.mutation  # noqa
-        import app.models.structure  # noqa
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("Tables created via create_all fallback.")
+        logger.warning(f"Alembic migration warning: {e}")
 
     logger.info("Startup complete.")
     yield
