@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.env
+dist/
+build/
+
+# ML artifacts (tracked separately or via git-lfs if needed)
+backend/app/ml/faiss_store/
+backend/app/ml/embeddings/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.env.local
+
+# Docker
+.docker/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

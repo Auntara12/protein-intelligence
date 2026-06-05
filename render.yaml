@@ -1,0 +1,62 @@
+# render.yaml — Render.com deployment configuration
+#
+# IMPORTANT: This file deploys the backend API + Redis ONLY.
+# Database is Neon PostgreSQL (neon.tech) — set DATABASE_URL manually.
+# See DEPLOYMENT.md for the full step-by-step guide.
+#
+# Usage:
+#   Option A (recommended): Deploy manually via Render dashboard.
+#   Option B: render.com → New → Blueprint → connect GitHub repo.
+
+services:
+  # ── FastAPI Backend ─────────────────────────────────────────────────────────
+  - type: web
+    name: protein-intelligence-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    plan: free
+    autoDeploy: true
+
+    envVars:
+      # Set DATABASE_URL manually in Render dashboard.
+      # Get it from neon.tech after creating a project.
+      # Format: postgresql+asyncpg://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: protein-intelligence-redis
+          property: connectionString
+
+      # Set to your Vercel frontend URL so CORS works.
+      # Example: https://protein-intelligence.vercel.app
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+      - key: DEBUG
+        value: "false"
+
+      # Optional: NCBI API key for higher ClinVar rate limits
+      # Get free at: https://www.ncbi.nlm.nih.gov/account/
+      # - key: NCBI_API_KEY
+      #   sync: false
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  - type: redis
+    name: protein-intelligence-redis
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
+
+# ── NOT included: PostgreSQL ─────────────────────────────────────────────────
+# Use Neon (neon.tech) instead of Render Postgres.
+# Reason: Render free Postgres is deleted after 90 days.
+# Neon free tier is persistent and serverless with no sleep.

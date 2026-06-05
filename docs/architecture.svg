@@ -1,0 +1,93 @@
+<svg width="800" height="580" viewBox="0 0 800 580" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="580" fill="#f8fafb" rx="12"/>
+
+  <!-- Title -->
+  <text x="400" y="36" text-anchor="middle" font-size="16" font-weight="600" fill="#111">Protein Intelligence Platform — Architecture</text>
+
+  <!-- Frontend -->
+  <rect x="250" y="56" width="300" height="56" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1"/>
+  <text x="400" y="80" text-anchor="middle" font-size="13" font-weight="600" fill="#4c1d95">React + TypeScript Frontend</text>
+  <text x="400" y="98" text-anchor="middle" font-size="11" fill="#6d28d9">Tailwind · Framer Motion · 3Dmol.js</text>
+
+  <!-- Arrow: Frontend → Middleware -->
+  <line x1="400" y1="112" x2="400" y2="142" stroke="#888" stroke-width="1.2" marker-end="url(#arr)"/>
+  <text x="412" y="132" font-size="10" fill="#888">REST/JSON</text>
+
+  <!-- Middleware -->
+  <rect x="250" y="142" width="300" height="38" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+  <text x="400" y="166" text-anchor="middle" font-size="11" font-weight="500" fill="#334155">Middleware: rate limiter · CORS · GZip</text>
+
+  <!-- Arrow: Middleware → Backend -->
+  <line x1="400" y1="180" x2="400" y2="210" stroke="#888" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <!-- FastAPI Backend -->
+  <rect x="210" y="210" width="380" height="56" rx="8" fill="#d1fae5" stroke="#059669" stroke-width="1"/>
+  <text x="400" y="234" text-anchor="middle" font-size="13" font-weight="600" fill="#064e3b">FastAPI Backend</text>
+  <text x="400" y="252" text-anchor="middle" font-size="10" fill="#065f46">protein · mutation · structure · similarity · align · jobs · batch · compare</text>
+
+  <!-- Three arrows down from backend -->
+  <!-- Left: Redis -->
+  <line x1="270" y1="266" x2="150" y2="330" stroke="#888" stroke-width="1.2" marker-end="url(#arr)"/>
+  <!-- Center: PostgreSQL -->
+  <line x1="400" y1="266" x2="400" y2="330" stroke="#888" stroke-width="1.2" marker-end="url(#arr)"/>
+  <!-- Right: External APIs -->
+  <line x1="530" y1="266" x2="640" y2="330" stroke="#888" stroke-width="1.2" marker-end="url(#arr)"/>
+  <!-- ML (left-bottom) -->
+  <line x1="250" y1="266" x2="150" y2="410" stroke="#888" stroke-width="1.2" stroke-dasharray="4 2" marker-end="url(#arr)"/>
+
+  <!-- Redis -->
+  <rect x="50" y="330" width="200" height="52" rx="8" fill="#fff7ed" stroke="#ea580c" stroke-width="1"/>
+  <text x="150" y="352" text-anchor="middle" font-size="12" font-weight="600" fill="#7c2d12">Redis</text>
+  <text x="150" y="370" text-anchor="middle" font-size="10" fill="#9a3412">cache · rate limit · jobs</text>
+
+  <!-- PostgreSQL -->
+  <rect x="300" y="330" width="200" height="52" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="1"/>
+  <text x="400" y="352" text-anchor="middle" font-size="12" font-weight="600" fill="#1e3a8a">PostgreSQL (Neon)</text>
+  <text x="400" y="370" text-anchor="middle" font-size="10" fill="#1d4ed8">proteins · mutations · ClinVar</text>
+
+  <!-- Alembic label -->
+  <text x="400" y="392" text-anchor="middle" font-size="10" fill="#94a3b8">Alembic migrations</text>
+
+  <!-- External APIs -->
+  <rect x="540" y="330" width="210" height="52" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1"/>
+  <text x="645" y="352" text-anchor="middle" font-size="12" font-weight="600" fill="#713f12">External APIs</text>
+  <text x="645" y="370" text-anchor="middle" font-size="10" fill="#92400e">UniProt · AlphaFold · PDB · ClinVar</text>
+
+  <!-- ML Layer -->
+  <rect x="50" y="410" width="200" height="52" rx="8" fill="#d1fae5" stroke="#16a34a" stroke-width="1"/>
+  <text x="150" y="432" text-anchor="middle" font-size="12" font-weight="600" fill="#14532d">ML Layer</text>
+  <text x="150" y="450" text-anchor="middle" font-size="10" fill="#166534">ESM2 · Smith-Waterman · FAISS</text>
+
+  <!-- Arrow: ML → FAISS -->
+  <line x1="150" y1="462" x2="150" y2="496" stroke="#888" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <!-- FAISS Index -->
+  <rect x="70" y="496" width="160" height="44" rx="8" fill="#f1f5f9" stroke="#64748b" stroke-width="1"/>
+  <text x="150" y="516" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">FAISS Index</text>
+  <text x="150" y="530" text-anchor="middle" font-size="10" fill="#475569">320-dim cosine similarity</text>
+
+  <!-- CI/CD -->
+  <rect x="590" y="430" width="160" height="44" rx="8" fill="#f1f5f9" stroke="#64748b" stroke-width="1"/>
+  <text x="670" y="450" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">CI / CD</text>
+  <text x="670" y="466" text-anchor="middle" font-size="10" fill="#475569">GitHub Actions · Docker</text>
+
+  <!-- Arrow backend → CI -->
+  <line x1="590" y1="266" x2="670" y2="428" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arr)"/>
+
+  <!-- Deploy -->
+  <rect x="590" y="496" width="160" height="44" rx="8" fill="#f1f5f9" stroke="#64748b" stroke-width="1"/>
+  <text x="670" y="516" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Deploy</text>
+  <text x="670" y="530" text-anchor="middle" font-size="10" fill="#475569">Render · Vercel · Docker</text>
+  <line x1="670" y1="474" x2="670" y2="494" stroke="#888" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <!-- 55 tests badge -->
+  <rect x="310" y="496" width="180" height="32" rx="6" fill="#ecfdf5" stroke="#16a34a" stroke-width="1"/>
+  <text x="400" y="516" text-anchor="middle" font-size="11" font-weight="500" fill="#14532d">55 automated tests · pytest</text>
+</svg>
