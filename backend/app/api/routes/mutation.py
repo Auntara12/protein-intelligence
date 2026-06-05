@@ -80,26 +80,29 @@ async def analyze_mutation(
         for v in clinvar_data
     )
 
-    # Cache in DB — use INSERT ON CONFLICT DO NOTHING to handle race conditions
+    # Cache in DB — wrapped in try/except to survive duplicate-row or missing-constraint errors
     if not db_mutation:
-        from sqlalchemy.dialects.postgresql import insert as pg_insert
-        stmt = pg_insert(Mutation).values(
-            gene_name=gene_upper,
-            mutation_str=mutation_upper,
-            original_aa=parse_result["original_aa"],
-            position=parse_result["position"],
-            mutated_aa=parse_result["mutated_aa"],
-            domain=prop_analysis.get("domain"),
-            charge_change=prop_analysis.get("charge_change"),
-            polarity_change=prop_analysis.get("polarity_change"),
-            size_change=prop_analysis.get("size_change"),
-            hydrophobicity_change=prop_analysis.get("hydrophobicity_change"),
-            predicted_effect=prop_analysis.get("predicted_effect"),
-            is_known_pathogenic=is_pathogenic,
-            analysis_details=prop_analysis.get("analysis_details"),
-        ).on_conflict_do_nothing()
-        await db.execute(stmt)
-        await db.flush()
+        try:
+            new_mut = Mutation(
+                gene_name=gene_upper,
+                mutation_str=mutation_upper,
+                original_aa=parse_result["original_aa"],
+                position=parse_result["position"],
+                mutated_aa=parse_result["mutated_aa"],
+                domain=prop_analysis.get("domain"),
+                charge_change=prop_analysis.get("charge_change"),
+                polarity_change=prop_analysis.get("polarity_change"),
+                size_change=prop_analysis.get("size_change"),
+                hydrophobicity_change=prop_analysis.get("hydrophobicity_change"),
+                predicted_effect=prop_analysis.get("predicted_effect"),
+                is_known_pathogenic=is_pathogenic,
+                analysis_details=prop_analysis.get("analysis_details"),
+            )
+            db.add(new_mut)
+            await db.flush()
+        except Exception as e:
+            logger.warning(f"Mutation cache insert skipped for {gene_upper}/{mutation_upper}: {e}")
+            await db.rollback()
 
     return MutationAnalysis(
         gene_name=gene_upper,
