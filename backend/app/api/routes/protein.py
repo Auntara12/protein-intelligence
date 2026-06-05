@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import asyncio
@@ -33,7 +33,6 @@ async def _bg_index_protein(gene_name: str, sequence: str, uniprot_id: str) -> N
 @router.get("/protein/{gene_name}", response_model=ProteinResponse)
 async def get_protein(
     gene_name: str,
-    background_tasks: BackgroundTasks,
     organism: str = Query(default="human", description="Organism (default: human)"),
     refresh: bool = Query(default=False, description="Force refresh from UniProt"),
     db: AsyncSession = Depends(get_db),
@@ -55,8 +54,8 @@ async def get_protein(
             logger.info(f"DB hit for gene: {gene_upper}")
             from app.ml.esm2_service import is_indexed
             if not is_indexed(gene_upper) and db_protein.sequence:
-                background_tasks.add_task(
-                    _bg_index_protein, gene_upper, db_protein.sequence, db_protein.uniprot_id or ""
+                asyncio.create_task(
+                    _bg_index_protein(gene_upper, db_protein.sequence, db_protein.uniprot_id or "")
                 )
             return ProteinResponse(
                 gene_name=db_protein.gene_name,
@@ -99,8 +98,8 @@ async def get_protein(
 
     from app.ml.esm2_service import is_indexed
     if not is_indexed(gene_upper) and data.get("sequence"):
-        background_tasks.add_task(
-            _bg_index_protein, gene_upper, data["sequence"], data.get("uniprot_id", "")
+        asyncio.create_task(
+            _bg_index_protein(gene_upper, data["sequence"], data.get("uniprot_id", ""))
         )
 
     return ProteinResponse(**{**data, "cached": data.get("cached", False)})
