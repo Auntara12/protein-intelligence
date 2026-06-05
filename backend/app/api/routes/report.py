@@ -154,16 +154,28 @@ async def compare_proteins(
     except Exception as e:
         logger.warning(f"Alignment failed for {g1}/{g2}: {e}")
 
-    # ESM2 similarity — ensure both genes are indexed first, then search
+    # ESM2 similarity — only compute if both proteins are already indexed.
+    # If not, kick off background indexing and return null; the next compare call will have it.
     esm2_similarity = None
     try:
-        from app.api.routes.similarity import get_similar_proteins, _ensure_embedding
-        await _ensure_embedding(g2, db)
-        sim_result = await get_similar_proteins(g1, top_k=50, db=db)
-        for sp in sim_result.results:
-            if sp.gene_name == g2:
-                esm2_similarity = sp.similarity_score
-                break
+        from app.ml.esm2_service import is_indexed, _indexing_in_progress
+        from app.api.routes.similarity import get_similar_proteins
+        from app.api.routes.protein import _bg_index_protein
+
+        if is_indexed(g1) and is_indexed(g2):
+            sim_result = await get_similar_proteins(g1, top_k=50, db=db)
+            for sp in sim_result.results:
+                if sp.gene_name == g2:
+                    esm2_similarity = sp.similarity_score
+                    break
+        else:
+            # Schedule background indexing for any unindexed protein
+            for gene, pdict in [(g1, p1), (g2, p2)]:
+                seq = (pdict or {}).get("sequence") if isinstance(pdict, dict) else None
+                uid = (pdict or {}).get("uniprot_id", "") if isinstance(pdict, dict) else ""
+                if seq and not is_indexed(gene) and gene not in _indexing_in_progress:
+                    import asyncio as _asyncio
+                    _asyncio.create_task(_bg_index_protein(gene, seq, uid))
     except Exception:
         pass
 

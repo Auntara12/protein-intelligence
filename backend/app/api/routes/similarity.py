@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import asyncio
 import logging
 
 from app.db.database import get_db
@@ -41,7 +42,8 @@ async def _ensure_embedding(gene_name: str, db: AsyncSession) -> bool:
     if not sequence:
         return False
 
-    embedding = compute_embedding(sequence)
+    # Run CPU-bound PyTorch work in a thread pool so the event loop stays responsive
+    embedding = await asyncio.to_thread(compute_embedding, sequence)
     if embedding is None:
         return False
 

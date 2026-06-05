@@ -27,6 +27,15 @@ _tokenizer = None
 _faiss_index = None
 _metadata: List[Dict] = []
 
+# Track proteins currently being indexed in background to avoid duplicate work
+_indexing_in_progress: set = set()
+
+
+def is_indexed(gene_name: str) -> bool:
+    """Return True if gene already has a vector in the FAISS index."""
+    _, metadata = _load_faiss_index()
+    return any(m["gene_name"] == gene_name.upper() for m in metadata)
+
 
 def _ensure_dirs():
     FAISS_INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)

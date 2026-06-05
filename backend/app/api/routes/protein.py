@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import asyncio
 import logging
 
 from app.db.database import get_db
@@ -12,9 +13,27 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+async def _bg_index_protein(gene_name: str, sequence: str, uniprot_id: str) -> None:
+    """Background task: compute ESM2 embedding and add to FAISS. No DB session needed."""
+    from app.ml.esm2_service import compute_embedding, add_to_index, _indexing_in_progress, is_indexed
+    if gene_name in _indexing_in_progress or is_indexed(gene_name):
+        return
+    _indexing_in_progress.add(gene_name)
+    try:
+        embedding = await asyncio.to_thread(compute_embedding, sequence)
+        if embedding is not None:
+            add_to_index(gene_name, uniprot_id, embedding)
+            logger.info(f"Background indexing complete for {gene_name}.")
+    except Exception as e:
+        logger.warning(f"Background indexing failed for {gene_name}: {e}")
+    finally:
+        _indexing_in_progress.discard(gene_name)
+
+
 @router.get("/protein/{gene_name}", response_model=ProteinResponse)
 async def get_protein(
     gene_name: str,
+    background_tasks: BackgroundTasks,
     organism: str = Query(default="human", description="Organism (default: human)"),
     refresh: bool = Query(default=False, description="Force refresh from UniProt"),
     db: AsyncSession = Depends(get_db),
@@ -34,6 +53,11 @@ async def get_protein(
         db_protein = result.scalar_one_or_none()
         if db_protein:
             logger.info(f"DB hit for gene: {gene_upper}")
+            from app.ml.esm2_service import is_indexed
+            if not is_indexed(gene_upper) and db_protein.sequence:
+                background_tasks.add_task(
+                    _bg_index_protein, gene_upper, db_protein.sequence, db_protein.uniprot_id or ""
+                )
             return ProteinResponse(
                 gene_name=db_protein.gene_name,
                 uniprot_id=db_protein.uniprot_id,
@@ -72,6 +96,12 @@ async def get_protein(
         db.add(db_protein)
 
     await db.flush()
+
+    from app.ml.esm2_service import is_indexed
+    if not is_indexed(gene_upper) and data.get("sequence"):
+        background_tasks.add_task(
+            _bg_index_protein, gene_upper, data["sequence"], data.get("uniprot_id", "")
+        )
 
     return ProteinResponse(**{**data, "cached": data.get("cached", False)})
 
