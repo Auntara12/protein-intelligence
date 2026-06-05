@@ -80,9 +80,10 @@ async def analyze_mutation(
         for v in clinvar_data
     )
 
-    # Cache in DB
+    # Cache in DB — use INSERT ON CONFLICT DO NOTHING to handle race conditions
     if not db_mutation:
-        db_mutation = Mutation(
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        stmt = pg_insert(Mutation).values(
             gene_name=gene_upper,
             mutation_str=mutation_upper,
             original_aa=parse_result["original_aa"],
@@ -96,8 +97,8 @@ async def analyze_mutation(
             predicted_effect=prop_analysis.get("predicted_effect"),
             is_known_pathogenic=is_pathogenic,
             analysis_details=prop_analysis.get("analysis_details"),
-        )
-        db.add(db_mutation)
+        ).on_conflict_do_nothing(constraint="uq_mutations_gene_mutation")
+        await db.execute(stmt)
         await db.flush()
 
     return MutationAnalysis(

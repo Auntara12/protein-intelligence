@@ -1,10 +1,13 @@
-from sqlalchemy import Column, String, Integer, Float, Text, DateTime, JSON, Boolean
+from sqlalchemy import Column, String, Integer, Float, Text, DateTime, JSON, Boolean, UniqueConstraint
 from sqlalchemy.sql import func
 from app.db.database import Base
 
 
 class Mutation(Base):
     __tablename__ = "mutations"
+    __table_args__ = (
+        UniqueConstraint("gene_name", "mutation_str", name="uq_mutations_gene_mutation"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     gene_name = Column(String(50), index=True, nullable=False)
