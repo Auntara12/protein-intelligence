@@ -6,14 +6,15 @@ import os
 
 def _fix_db_url(url: str) -> str:
     """
-    Render and Neon provide postgresql:// or postgres:// URLs.
-    SQLAlchemy async requires postgresql+asyncpg://.
-    Auto-convert so deployment never fails due to wrong URL scheme.
+    Neon/Render provide postgresql:// URLs with sslmode=require.
+    asyncpg needs postgresql+asyncpg:// and ssl=require (not sslmode).
     """
     if url.startswith("postgres://"):
-        return url.replace("postgres://", "postgresql+asyncpg://", 1)
-    if url.startswith("postgresql://"):
-        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    # asyncpg doesn't understand sslmode= — replace with ssl=
+    url = url.replace("sslmode=require", "ssl=require")
     return url
 
 
