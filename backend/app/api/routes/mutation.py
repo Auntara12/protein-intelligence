@@ -97,7 +97,7 @@ async def analyze_mutation(
             predicted_effect=prop_analysis.get("predicted_effect"),
             is_known_pathogenic=is_pathogenic,
             analysis_details=prop_analysis.get("analysis_details"),
-        ).on_conflict_do_nothing(constraint="uq_mutations_gene_mutation")
+        ).on_conflict_do_nothing()
         await db.execute(stmt)
         await db.flush()
 
